@@ -1,0 +1,11 @@
+.youtube-archive-clock {
+  white-space: pre;
+  font: inherit;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-showing .youtube-archive-clock,
+.ad-interrupting .youtube-archive-clock {
+  display: none;
+}

@@ -12,6 +12,16 @@ Firefox 142以降向け。配信終了済みYouTubeアーカイブの再生時�
 
 一時アドオンはFirefoxの再起動で解除されます。
 
+### 永続的なインストール手順
+
+一時的なアドオンとしてではなく永続的な拡張機能としてインストールしたい場合、Developer Editionが必要です。
+
+以下のコマンドを実行することで`web-ext-artifacts/`にzipファイルが生成されます。Firefoxのアドオンマネージャーを開き、「ファイルからアドオンをインストール」でビルドされたzipファイルを選択することでインストールできます。
+
+```sh
+web-ext build --source-dir extension
+```
+
 ## 動作
 
 - デスクトップ版 `https://www.youtube.com/watch?v=...` が対象です。

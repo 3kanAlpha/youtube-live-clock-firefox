@@ -19,6 +19,33 @@
     return Number.isFinite(start) && Number.isFinite(end) && end >= start ? start : null;
   }
 
+  function embeddedPlayerResponse(scripts) {
+    const marker = "var ytInitialPlayerResponse = ";
+    for (const script of scripts) {
+      const source = typeof script === "string" ? script : script.textContent;
+      if (typeof source !== "string") continue;
+      const start = source.indexOf(marker);
+      if (start < 0) continue;
+      const json = source.slice(start + marker.length);
+      let depth = 0;
+      let quoted = false;
+      let escaped = false;
+      for (let index = 0; index < json.length; index++) {
+        const character = json[index];
+        if (quoted) {
+          if (escaped) escaped = false;
+          else if (character === "\\") escaped = true;
+          else if (character === '"') quoted = false;
+        } else if (character === '"') quoted = true;
+        else if (character === "{") depth++;
+        else if (character === "}" && --depth === 0) {
+          try { return JSON.parse(json.slice(0, index + 1)); } catch { break; }
+        }
+      }
+    }
+    return null;
+  }
+
   function clockText(start, seconds) {
     if (!Number.isFinite(start) || !Number.isFinite(seconds) || seconds < 0) return "";
     const date = new Date(start + Math.floor(seconds) * 1000);
@@ -29,7 +56,7 @@
 
   // The same pure functions run in the extension and the dependency-free tests.
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { archiveStart, clockText };
+    module.exports = { archiveStart, clockText, embeddedPlayerResponse };
     return;
   }
 
@@ -52,8 +79,9 @@
         return;
       }
       const pagePlayer = player.wrappedJSObject;
-      const response = typeof pagePlayer?.getPlayerResponse === "function"
+      let response = typeof pagePlayer?.getPlayerResponse === "function"
         ? pagePlayer.getPlayerResponse() : window.wrappedJSObject?.ytInitialPlayerResponse;
+      if (!response) response = embeddedPlayerResponse(document.scripts);
       const start = archiveStart(response, url.searchParams.get("v"));
       const text = start === null ? "" : clockText(start, video.currentTime);
       if (!text) {

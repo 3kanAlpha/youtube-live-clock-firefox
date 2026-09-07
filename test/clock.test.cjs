@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { archiveStart, clockText } = require('../extension/content.js');
+const { archiveStart, clockText, embeddedPlayerResponse } = require('../extension/content.js');
 
 const id = 'fGdv79lZHIw';
 function archive() {
@@ -45,4 +45,13 @@ test('local dates, example, rollover, seek and invalid positions', () => {
   assert.equal(clockText(Date.parse('2020-03-08T06:59:59Z'), 1), ' (2020-03-08 03:00:00)');
   for (const seconds of [-1, NaN, Infinity, '12']) assert.equal(clockText(start, seconds), '');
   assert.equal(clockText(null, 0), '');
+});
+
+test('falls back to the embedded player response without evaluating page code', () => {
+  const response = embeddedPlayerResponse([
+    'var ignored = {}',
+    `var ytInitialPlayerResponse = ${JSON.stringify(archive())};var next = "{\\\"not JSON\\\"}";`,
+  ]);
+  assert.equal(archiveStart(response, id), Date.parse('2020-07-12T02:42:34Z'));
+  assert.equal(embeddedPlayerResponse(['var ytInitialPlayerResponse = {broken};']), null);
 });
